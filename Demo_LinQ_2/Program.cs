@@ -10,7 +10,7 @@ IEnumerable<Vehicule> vehicules = [
     new Avion(7, "A320", "Airbus", 150, false),
     new Voiture(8, "E-tron", "Audi", Voiture.CarburantEnum.Electrique, 3),
     new Voiture(10, "Niva SUV", "Lada", Voiture.CarburantEnum.Essence, 2),
-    new Avion(11, "A300-600ST", "Airbus", 266, true)
+    new Avion(11, "A300-600ST", "Airbus", 265, true)
 ];
 
 IEnumerable<Voiture> voitures = [
@@ -135,4 +135,44 @@ Console.WriteLine();
     {
         Console.WriteLine(" - " + item.Marque + " " + item.Modele + " " + item.Carburant);
     }
+}
+
+
+
+// Count
+{
+    int total1 = vehicules.OfType<Voiture>()
+                          .Count(v => v.NbPorte > 3);
+
+    int total2 = (from voiture in vehicules.OfType<Voiture>()
+                  where voiture.NbPorte > 3
+                  select voiture).Count();
+
+    int total3 = (from voiture in vehicules.OfType<Voiture>() select voiture).Count(v => v.NbPorte > 3);
+
+    Console.WriteLine($"Total 1 : {total1}");
+    Console.WriteLine($"Total 2 : {total2}");
+    Console.WriteLine($"Total 3 : {total3}");
+
+
+    int nbPlaceAll1 = vehicules.OfType<Avion>()
+                           .Sum(a => a.NbPlace);
+
+    int nbPlaceAll2 = vehicules.OfType<Avion>()
+                            .Select(a => a.NbPlace)
+                            .Sum();
+
+    Console.WriteLine($"PlaceAll 1 : {nbPlaceAll1}");
+    Console.WriteLine($"PlaceAll 2 : {nbPlaceAll2}");
+
+
+    double nbPlaceAvg1 = vehicules.OfType<Avion>()
+                                  .Average(a => a.NbPlace);
+
+    double nbPlaceAvg2 = vehicules.OfType<Avion>()
+                                  .Select(a => a.NbPlace)
+                                  .Average();
+
+    Console.WriteLine($"PlaceAvg 1 : {nbPlaceAvg1}");
+    Console.WriteLine($"PlaceAvg 2 : {nbPlaceAvg2}");
 }
