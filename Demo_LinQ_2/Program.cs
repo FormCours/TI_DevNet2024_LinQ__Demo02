@@ -176,3 +176,240 @@ Console.WriteLine();
     Console.WriteLine($"PlaceAvg 1 : {nbPlaceAvg1}");
     Console.WriteLine($"PlaceAvg 2 : {nbPlaceAvg2}");
 }
+Console.WriteLine();
+
+
+// Group By
+{
+    // -> La liste des voitures groupé par marque
+
+    //IEnumerable<IGrouping<string, Voiture>> grp1 = voitures.GroupBy(v => v.Marque);
+
+    IEnumerable<IGrouping<string, Voiture>> grp1 = from v in voitures
+                                                   group v by v.Marque;
+
+    foreach(IGrouping<string, Voiture> element in grp1)
+    {
+        Console.WriteLine(" - " + element.Key);
+
+        foreach(Voiture v in element)
+        {
+            Console.WriteLine($"{v.Modele} {v.Carburant}");
+        }
+    }
+    Console.WriteLine();
+
+    //---------------------------------------------------------------------------
+
+    // La liste des voiture avec les informations suivantes : Nom (Marque + Modele) et le nombre porte.
+    // Le tout groupé par type de carburant.
+
+    var grp2 = voitures.Select(v => new
+                        {
+                            Nom = $"{v.Marque} {v.Modele}",
+                            Porte = v.NbPorte,
+                            Carburant = v.Carburant,
+                        })
+                    .GroupBy(v => v.Carburant);
+
+    foreach(var element in grp2)
+    {
+        Console.WriteLine(" - " + element.Key);
+
+        foreach(var voiture in element)
+        {
+            Console.WriteLine(voiture);
+        }
+    }
+    Console.WriteLine();
+
+    var grp3 = voitures.GroupBy(v => v.Carburant)
+                       .Select(g => new
+                       {
+                           Clef = g.Key,
+                           Valeurs = g.Select(el => new {
+                               Nom = $"{el.Marque} {el.Modele}",
+                               Porte = el.NbPorte
+                           })
+                       });
+
+    foreach (var element in grp3)
+    {
+        Console.WriteLine(" - " + element.Clef);
+
+        foreach (var voiture in element.Valeurs)
+        {
+            Console.WriteLine(voiture);
+        }
+    }
+    Console.WriteLine();
+
+
+    var grp4 = from v in voitures
+               group new { Nom = $"{v.Marque} {v.Modele}", Porte = v.NbPorte } by v.Carburant;
+               //    ↑ Les données qui seront présente dans le groupe
+
+    foreach (var element in grp4)
+    {
+        Console.WriteLine(" - " + element.Key);
+
+        foreach (var v in element)
+        {
+            Console.WriteLine(v);
+        }
+    }
+
+}
+
+//##########################################################################################################
+//##########################################################################################################
+//##########################################################################################################
+
+IEnumerable<Auteur> auteurs = [
+    new Auteur(1, "Douglas", "Adams"),
+    new Auteur(2, "Carl", "Barks"),
+    new Auteur(3, "René", "Barjavel"),
+    new Auteur(4, "Don", "Rosa"),
+    new Auteur(5, "Clélia", "Rosso")
+];
+
+IEnumerable<Livre> livres = [
+    new Livre(1, "Le Guide du voyageur galactique", 1978, 1),
+    new Livre(2, "Donald et le trésor du pirate", 1974, 2),
+    new Livre(3, "La Chasse au canard...", 1988, 4),
+    new Livre(4, "Le chapeau rouge", 1957, 2),
+    new Livre(5, "La nuit des temps", 1968, 3),
+    new Livre(6, "Le Retour des trois Caballeros", 2000, 4),
+    new Livre(7, "Un avion à réaction !", 1955, 2),
+    new Livre(8, "Trois bons petits canards", 2000, 2),
+    new Livre(9, "Ravage", 1943, 3),
+    new Livre(10, "L'Enchanteur", 1984, 3),
+    new Livre(11, "Un baraqué débusqué !", 1955, 2),
+    new Livre(12, "Citrouille carabinée", 1988, 4)
+];
+
+{
+    Console.WriteLine("Inner Join");
+    // La liste des livres avec leur auteurs
+
+    var join01 = from l in livres
+                 join a in auteurs on l.AuteurId equals a.Id
+                 select new
+                 {
+                     Titre = l.Titre,
+                     Auteur = $"{a.Prenom} {a.Nom}"
+                 };
+
+    foreach (var item in join01)
+    {
+        Console.WriteLine(item);
+    }
+    Console.WriteLine();
+
+    var join02 = livres.Join(
+                            auteurs,            // Collection à joindre
+                            l => l.AuteurId,    // La clef de la collection de base
+                            a => a.Id,          // La clef de la collection jointe
+                            (livre, auteur) => new
+                            {
+                                Titre = livre.Titre,
+                                Auteur = $"{auteur.Prenom} {auteur.Nom}"
+                            }
+                        );
+
+    foreach (var item in join02)
+    {
+        Console.WriteLine(item);
+    }
+    Console.WriteLine();
+}
+
+{
+    Console.WriteLine("Left Join");
+    // La liste des auteurs avec leurs oeuvres
+
+    var join03 = auteurs.GroupJoin(
+                            livres,           // La collection à joindre
+                            a => a.Id,        // La clef dans la collection de base
+                            l => l.AuteurId,  // La clef dans la collection de jointe,
+                            (auteur, listLivre) => new
+                            {
+                                Nom = $"{auteur.Prenom} {auteur.Nom}",
+                                Livres = listLivre.Select(l => new { l.Titre, l.Annee })
+                            }
+                        );
+
+    foreach(var item in join03)
+    {
+        Console.WriteLine(" - " + item.Nom);
+
+        foreach (var livre in item.Livres)
+        {
+            Console.WriteLine($"{livre.Titre} ({livre.Annee})");
+        }
+
+        if(item.Livres.Count() == 0)
+        {
+            Console.WriteLine("Pas encore de livre :o");
+        }
+    }
+    Console.WriteLine();
+
+
+    var join04 = from a in auteurs
+                 join l in livres on a.Id equals l.AuteurId into listLivre
+                 select new
+                 {
+                     Nom = $"{a.Prenom} {a.Nom}",
+                     Livres = listLivre.Select(l => new { l.Titre, l.Annee })
+                 };
+
+    foreach (var item in join04)
+    {
+        Console.WriteLine(" - " + item.Nom);
+
+        foreach (var livre in item.Livres)
+        {
+            Console.WriteLine($"{livre.Titre} ({livre.Annee})");
+        }
+
+        if (item.Livres.Count() == 0)
+        {
+            Console.WriteLine("Pas encore de livre :o");
+        }
+    }
+}
+
+
+{
+    Console.WriteLine("Cross Join");
+    var join05 = from l in livres
+                 from a in auteurs
+                 select new
+                 {
+                     Auteur = $"{a.Prenom} {a.Nom}",
+                     Livre = l.Titre
+                 };
+
+    foreach (var item in join05)
+    {
+        Console.WriteLine(item);
+    }
+    Console.WriteLine();
+
+    Console.Clear();
+    Console.WriteLine("Cross Join + Where");
+    var join06 = from l in livres
+                 from a in auteurs
+                 where a.Id == l.AuteurId   // Condition de la jointure
+                 select new
+                 {
+                     Auteur = $"{a.Prenom} {a.Nom}",
+                     Livre = l.Titre
+                 };
+
+    foreach (var item in join06)
+    {
+        Console.WriteLine(item);
+    }
+}
